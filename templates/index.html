@@ -1,0 +1,801 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Chatbot de Requerimiento</title>
+  <style>
+    * {
+      box-sizing: border-box;
+    }
+
+    body {
+      margin: 0;
+      font-family: Arial, sans-serif;
+      background: #f4f6f8;
+      color: #1f2937;
+    }
+
+    .app {
+      max-width: 1200px;
+      margin: 0 auto;
+      padding: 24px;
+    }
+
+    .topbar {
+      background: #ffffff;
+      border-radius: 16px;
+      padding: 20px 24px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      box-shadow: 0 6px 24px rgba(0,0,0,0.08);
+      margin-bottom: 20px;
+    }
+
+    .brand {
+      display: flex;
+      align-items: center;
+      gap: 14px;
+    }
+
+    .brand-badge {
+      width: 44px;
+      height: 44px;
+      border-radius: 12px;
+      background: #0f62fe;
+      color: white;
+      font-weight: bold;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .brand-title {
+      font-size: 20px;
+      font-weight: 700;
+      margin-bottom: 4px;
+    }
+
+    .brand-subtitle {
+      font-size: 13px;
+      color: #6b7280;
+    }
+
+    .status {
+      font-size: 13px;
+      color: #0f9d58;
+      font-weight: 600;
+    }
+
+    .content {
+      display: grid;
+      grid-template-columns: 320px 1fr;
+      gap: 20px;
+    }
+
+    .info-card,
+    .chat-shell {
+      background: #ffffff;
+      border-radius: 16px;
+      box-shadow: 0 6px 24px rgba(0,0,0,0.08);
+    }
+
+    .info-card {
+      padding: 20px;
+      height: fit-content;
+    }
+
+    .info-card h2 {
+      margin-top: 0;
+      font-size: 20px;
+    }
+
+    .info-card p,
+    .info-card li {
+      color: #4b5563;
+      line-height: 1.5;
+      font-size: 14px;
+    }
+
+    .chat-shell {
+      display: flex;
+      flex-direction: column;
+      min-height: 720px;
+      overflow: hidden;
+    }
+
+    .chat-top {
+      padding: 18px 20px;
+      border-bottom: 1px solid #e5e7eb;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+
+    .chat-top-left {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+
+    .chat-avatar,
+    .mini-avatar {
+      background: #0f62fe;
+      color: white;
+      font-weight: 700;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .chat-avatar {
+      width: 44px;
+      height: 44px;
+      border-radius: 12px;
+    }
+
+    .mini-avatar {
+      width: 32px;
+      height: 32px;
+      border-radius: 10px;
+      flex-shrink: 0;
+    }
+
+    .chat-top-title {
+      font-weight: 700;
+      font-size: 16px;
+    }
+
+    .chat-top-subtitle {
+      color: #6b7280;
+      font-size: 13px;
+      margin-top: 2px;
+    }
+
+    .new-btn,
+    .send-btn,
+    .audio-btn {
+      border: none;
+      border-radius: 10px;
+      padding: 10px 14px;
+      font-weight: 600;
+      cursor: pointer;
+    }
+
+    .new-btn {
+      background: #eef2ff;
+      color: #1d4ed8;
+    }
+
+    .send-btn {
+      background: #0f62fe;
+      color: white;
+    }
+
+    .audio-btn {
+      background: #f3f4f6;
+      color: #111827;
+    }
+
+    .audio-btn.recording {
+      background: #fee2e2;
+      color: #b91c1c;
+    }
+
+    .send-btn:disabled,
+    .audio-btn:disabled,
+    .new-btn:disabled {
+      opacity: 0.6;
+      cursor: not-allowed;
+    }
+
+    .messages {
+      flex: 1;
+      padding: 20px;
+      overflow-y: auto;
+      background: #f9fafb;
+    }
+
+    .message-row {
+      display: flex;
+      margin-bottom: 14px;
+      gap: 10px;
+    }
+
+    .message-row.user {
+      justify-content: flex-end;
+    }
+
+    .message-row.user .bubble {
+      background: #0f62fe;
+      color: white;
+    }
+
+    .message-row.bot .bubble {
+      background: white;
+      color: #111827;
+      border: 1px solid #e5e7eb;
+    }
+
+    .bubble {
+      padding: 14px 16px;
+      border-radius: 14px;
+      max-width: 720px;
+      line-height: 1.45;
+      white-space: normal;
+      word-break: break-word;
+    }
+
+    .meta {
+      margin-top: 6px;
+      font-size: 12px;
+      color: #6b7280;
+    }
+
+    .typing,
+    .error-box {
+      margin: 8px 0 16px;
+      border-radius: 12px;
+      padding: 12px 14px;
+      font-size: 14px;
+    }
+
+    .typing {
+      background: #eef2ff;
+      color: #3730a3;
+    }
+
+    .error-box {
+      background: #fef2f2;
+      color: #b91c1c;
+      border: 1px solid #fecaca;
+    }
+
+    .ticket-card {
+      background: white;
+      border: 1px solid #e5e7eb;
+      border-radius: 14px;
+      padding: 16px;
+      margin: 12px 0 18px 42px;
+    }
+
+    .ticket-head {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 14px;
+      gap: 10px;
+    }
+
+    .ticket-id {
+      font-weight: 700;
+      font-size: 16px;
+    }
+
+    .ticket-status {
+      padding: 6px 10px;
+      border-radius: 999px;
+      font-size: 12px;
+      font-weight: 700;
+    }
+
+    .ticket-status.ok {
+      background: #dcfce7;
+      color: #166534;
+    }
+
+    .ticket-status.warn {
+      background: #fef3c7;
+      color: #92400e;
+    }
+
+    .ticket-grid {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(180px, 1fr));
+      gap: 12px;
+    }
+
+    .ticket-item {
+      background: #f9fafb;
+      padding: 10px 12px;
+      border-radius: 10px;
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+      font-size: 14px;
+    }
+
+    .composer {
+      border-top: 1px solid #e5e7eb;
+      padding: 18px 20px 20px;
+      background: #ffffff;
+    }
+
+    .composer-box {
+      border: 1px solid #d1d5db;
+      border-radius: 14px;
+      padding: 14px;
+      background: #fff;
+    }
+
+    .composer-header {
+      display: flex;
+      justify-content: space-between;
+      gap: 12px;
+      font-size: 13px;
+      color: #6b7280;
+      margin-bottom: 12px;
+      flex-wrap: wrap;
+    }
+
+    textarea {
+      width: 100%;
+      min-height: 110px;
+      resize: vertical;
+      border: none;
+      outline: none;
+      font-size: 14px;
+      font-family: inherit;
+      color: #111827;
+    }
+
+    .composer-footer {
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-end;
+      gap: 14px;
+      margin-top: 12px;
+      flex-wrap: wrap;
+    }
+
+    .helper {
+      font-size: 13px;
+      color: #6b7280;
+      max-width: 430px;
+      line-height: 1.4;
+    }
+
+    .audio-controls {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      align-items: center;
+    }
+
+    .audio-status {
+      font-size: 13px;
+      color: #4b5563;
+      min-width: 160px;
+    }
+
+    @media (max-width: 960px) {
+      .content {
+        grid-template-columns: 1fr;
+      }
+
+      .chat-shell {
+        min-height: 640px;
+      }
+
+      .ticket-grid {
+        grid-template-columns: 1fr;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="app">
+    <header class="topbar">
+      <div class="brand">
+        <div class="brand-badge">IA</div>
+        <div>
+          <div class="brand-title">Chatbot de Requerimiento</div>
+          <div class="brand-subtitle">Registro de incidencias operativas para mantenimiento</div>
+        </div>
+      </div>
+      <div class="status">● Servicio disponible</div>
+    </header>
+
+    <main class="content">
+      <section class="info-card">
+        <h2>¿Cómo registrar una incidencia?</h2>
+        <p>
+          Puedes escribir o grabar un audio indicando la <strong>tienda</strong>,
+          la <strong>ubicación dentro de la tienda</strong> y el
+          <strong>problema observado</strong>.
+        </p>
+        <ul>
+          <li>Incluye siempre la tienda o local.</li>
+          <li>Indica la ubicación específica dentro de la tienda.</li>
+          <li>Describe claramente qué está fallando o qué riesgo existe.</li>
+          <li>Si envías audio, el sistema lo transcribirá antes de analizarlo.</li>
+        </ul>
+      </section>
+
+      <section class="chat-shell">
+        <div class="chat-top">
+          <div class="chat-top-left">
+            <div class="chat-avatar">IA</div>
+            <div>
+              <div class="chat-top-title">Chatbot de Requerimiento</div>
+              <div class="chat-top-subtitle">Asistente para registrar incidencias operativas.</div>
+            </div>
+          </div>
+          <button class="new-btn" id="newRequestBtn">Nuevo requerimiento</button>
+        </div>
+
+        <div class="messages" id="messages">
+          <div class="message-row bot">
+            <div class="mini-avatar">IA</div>
+            <div>
+              <div class="bubble">Hola. Soy el Chatbot de Requerimiento.
+
+Puedo ayudarte a registrar una incidencia de mantenimiento.
+
+Puedes escribir o grabar un audio indicando:
+- tienda
+- ubicación dentro de la tienda
+- problema observado
+
+Ejemplo:
+En la tienda San Isidro, el congelador del área de carnes no enfría bien y podría comprometer el producto.</div>
+              <div class="meta">Chatbot de Requerimiento · 09:00</div>
+            </div>
+          </div>
+        </div>
+
+        <div class="composer">
+          <div class="composer-box">
+            <div class="composer-header">
+              <span>Puedes escribir o grabar un audio con la incidencia.</span>
+              <span>Enter para enviar texto</span>
+            </div>
+
+            <textarea
+              id="inputMessage"
+              placeholder="Ejemplo: En la tienda San Isidro, la cámara de seguridad del muelle 2 no transmite imagen y afecta el monitoreo de ingreso de mercadería."
+            ></textarea>
+
+            <div class="composer-footer">
+              <div class="helper">
+                Incluye la tienda, la ubicación dentro de la tienda y el problema observado.
+              </div>
+
+              <div class="audio-controls">
+                <div class="audio-status" id="audioStatus">Audio no grabado</div>
+                <button class="audio-btn" id="recordBtn" type="button">Grabar audio</button>
+                <button class="audio-btn" id="stopBtn" type="button" disabled>Detener</button>
+                <button class="audio-btn" id="sendAudioBtn" type="button" disabled>Enviar audio</button>
+                <button class="send-btn" id="sendBtn" type="button">Enviar texto</button>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+    </main>
+  </div>
+
+  <script>
+    const messages = document.getElementById("messages");
+    const input = document.getElementById("inputMessage");
+    const sendBtn = document.getElementById("sendBtn");
+    const newRequestBtn = document.getElementById("newRequestBtn");
+
+    const recordBtn = document.getElementById("recordBtn");
+    const stopBtn = document.getElementById("stopBtn");
+    const sendAudioBtn = document.getElementById("sendAudioBtn");
+    const audioStatus = document.getElementById("audioStatus");
+
+    const apiUrl = window.location.origin + "/process-message";
+    const apiAudioUrl = window.location.origin + "/process-audio";
+
+    let mediaRecorder = null;
+    let audioChunks = [];
+    let audioBlob = null;
+    let currentStream = null;
+
+    function nowTime() {
+      const d = new Date();
+      return d.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" });
+    }
+
+    function scrollBottom() {
+      messages.scrollTop = messages.scrollHeight;
+    }
+
+    function escapeHtml(str) {
+      return String(str)
+        .replace(/&/g, "&amp;")
+        .replace(/</g, "&lt;")
+        .replace(/>/g, "&gt;")
+        .replace(/"/g, "&quot;")
+        .replace(/'/g, "&#039;")
+        .replace(/\n/g, "<br>");
+    }
+
+    function addUserMessage(text) {
+      const row = document.createElement("div");
+      row.className = "message-row user";
+      row.innerHTML = `
+        <div>
+          <div class="bubble">${escapeHtml(text)}</div>
+          <div class="meta">Supervisor · ${nowTime()}</div>
+        </div>
+      `;
+      messages.appendChild(row);
+      scrollBottom();
+    }
+
+    function addBotMessage(text) {
+      const row = document.createElement("div");
+      row.className = "message-row bot";
+      row.innerHTML = `
+        <div class="mini-avatar">IA</div>
+        <div>
+          <div class="bubble">${escapeHtml(text)}</div>
+          <div class="meta">Chatbot de Requerimiento · ${nowTime()}</div>
+        </div>
+      `;
+      messages.appendChild(row);
+      scrollBottom();
+    }
+
+    function addTicketCard(data) {
+      const statusClass =
+        data.estado_ticket && data.estado_ticket.toLowerCase().includes("pendiente")
+          ? "warn"
+          : "ok";
+
+      const card = document.createElement("div");
+      card.className = "ticket-card";
+      card.innerHTML = `
+        <div class="ticket-head">
+          <div class="ticket-id">${escapeHtml(data.ticket_id || "TK-SIN-ID")}</div>
+          <div class="ticket-status ${statusClass}">${escapeHtml(data.estado_ticket || "Registrado")}</div>
+        </div>
+
+        <div class="ticket-grid">
+          <div class="ticket-item">
+            <strong>Tienda</strong>
+            <span>${escapeHtml(data.tienda || "-")}</span>
+          </div>
+          <div class="ticket-item">
+            <strong>Ubicación</strong>
+            <span>${escapeHtml(data.ubicacion || "-")}</span>
+          </div>
+          <div class="ticket-item">
+            <strong>Tipo</strong>
+            <span>${escapeHtml(data.tipo_requerimiento || "-")}</span>
+          </div>
+          <div class="ticket-item">
+            <strong>Prioridad</strong>
+            <span>${escapeHtml(data.prioridad || "-")}</span>
+          </div>
+        </div>
+      `;
+      messages.appendChild(card);
+      scrollBottom();
+    }
+
+    function addTyping(text = "Analizando el requerimiento...") {
+      const div = document.createElement("div");
+      div.className = "typing";
+      div.id = "typingIndicator";
+      div.textContent = text;
+      messages.appendChild(div);
+      scrollBottom();
+    }
+
+    function removeTyping() {
+      const el = document.getElementById("typingIndicator");
+      if (el) el.remove();
+    }
+
+    function addError(text) {
+      const box = document.createElement("div");
+      box.className = "error-box";
+      box.textContent = text;
+      messages.appendChild(box);
+      scrollBottom();
+    }
+
+    function resetChat() {
+      messages.innerHTML = `
+        <div class="message-row bot">
+          <div class="mini-avatar">IA</div>
+          <div>
+            <div class="bubble">Hola. Soy el Chatbot de Requerimiento.
+
+Puedo ayudarte a registrar una incidencia de mantenimiento.
+
+Puedes escribir o grabar un audio indicando:
+- tienda
+- ubicación dentro de la tienda
+- problema observado
+
+Ejemplo:
+En la tienda San Isidro, el congelador del área de carnes no enfría bien y podría comprometer el producto.</div>
+            <div class="meta">Chatbot de Requerimiento · ${nowTime()}</div>
+          </div>
+        </div>
+      `;
+      input.value = "";
+      audioBlob = null;
+      audioChunks = [];
+      audioStatus.textContent = "Audio no grabado";
+      sendAudioBtn.disabled = true;
+      input.focus();
+      scrollBottom();
+    }
+
+    async function sendMessage() {
+      const text = input.value.trim();
+      if (!text) return;
+
+      addUserMessage(text);
+      input.value = "";
+      sendBtn.disabled = true;
+      addTyping();
+
+      try {
+        const resp = await fetch(apiUrl, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            message: text,
+            usuario: "supervisor_demo",
+            canal: "web_chat"
+          })
+        });
+
+        const result = await resp.json();
+        removeTyping();
+
+        if (!resp.ok) {
+          throw new Error(result.error || `Backend respondió con estado ${resp.status}`);
+        }
+
+        addBotMessage(result.respuesta_texto || "Requerimiento procesado.");
+
+        if (result.generar_ticket && result.ticket_id) {
+          addTicketCard(result);
+        }
+
+      } catch (error) {
+        removeTyping();
+        addError("No se pudo procesar el requerimiento. Revisa los logs del servicio.");
+        console.error(error);
+      } finally {
+        sendBtn.disabled = false;
+        input.focus();
+      }
+    }
+
+    async function startRecording() {
+      try {
+        currentStream = await navigator.mediaDevices.getUserMedia({ audio: true });
+        audioChunks = [];
+        audioBlob = null;
+
+        mediaRecorder = new MediaRecorder(currentStream);
+        mediaRecorder.ondataavailable = (event) => {
+          if (event.data && event.data.size > 0) {
+            audioChunks.push(event.data);
+          }
+        };
+
+        mediaRecorder.onstop = () => {
+          const mimeType = mediaRecorder.mimeType || "audio/webm";
+          audioBlob = new Blob(audioChunks, { type: mimeType });
+          audioStatus.textContent = "Audio listo para enviar";
+          sendAudioBtn.disabled = false;
+          recordBtn.disabled = false;
+          stopBtn.disabled = true;
+          recordBtn.classList.remove("recording");
+        };
+
+        mediaRecorder.start();
+        audioStatus.textContent = "Grabando audio...";
+        recordBtn.disabled = true;
+        stopBtn.disabled = false;
+        sendAudioBtn.disabled = true;
+        recordBtn.classList.add("recording");
+      } catch (error) {
+        addError("No se pudo acceder al micrófono.");
+        console.error(error);
+      }
+    }
+
+    function stopRecording() {
+      if (mediaRecorder && mediaRecorder.state !== "inactive") {
+        mediaRecorder.stop();
+      }
+
+      if (currentStream) {
+        currentStream.getTracks().forEach(track => track.stop());
+      }
+
+      audioStatus.textContent = "Procesando audio grabado...";
+      stopBtn.disabled = true;
+    }
+
+    async function sendAudio() {
+      if (!audioBlob) return;
+
+      addUserMessage("🎤 Audio enviado");
+      sendAudioBtn.disabled = true;
+      recordBtn.disabled = true;
+      stopBtn.disabled = true;
+
+      addTyping("Transcribiendo y analizando el audio...");
+
+      try {
+        const extension = audioBlob.type.includes("wav")
+          ? "wav"
+          : audioBlob.type.includes("mp4")
+          ? "mp4"
+          : audioBlob.type.includes("mpeg") || audioBlob.type.includes("mp3")
+          ? "mp3"
+          : audioBlob.type.includes("ogg")
+          ? "ogg"
+          : "webm";
+
+        const formData = new FormData();
+        formData.append("audio", audioBlob, `incidencia.${extension}`);
+        formData.append("usuario", "supervisor_demo");
+        formData.append("canal", "web_chat_audio");
+
+        const resp = await fetch(apiAudioUrl, {
+          method: "POST",
+          body: formData
+        });
+
+        const result = await resp.json();
+        removeTyping();
+
+        if (!resp.ok) {
+          throw new Error(result.error || `Backend respondió con estado ${resp.status}`);
+        }
+
+        if (result.transcripcion) {
+          addBotMessage("Transcripción del audio:\n" + result.transcripcion);
+        }
+
+        addBotMessage(result.respuesta_texto || "Requerimiento procesado.");
+
+        if (result.generar_ticket && result.ticket_id) {
+          addTicketCard(result);
+        }
+
+        audioBlob = null;
+        audioChunks = [];
+        audioStatus.textContent = "Audio no grabado";
+      } catch (error) {
+        removeTyping();
+        addError("No se pudo procesar el audio. Revisa los logs del servicio.");
+        console.error(error);
+      } finally {
+        recordBtn.disabled = false;
+        stopBtn.disabled = true;
+        sendAudioBtn.disabled = true;
+      }
+    }
+
+    sendBtn.addEventListener("click", sendMessage);
+    newRequestBtn.addEventListener("click", resetChat);
+    recordBtn.addEventListener("click", startRecording);
+    stopBtn.addEventListener("click", stopRecording);
+    sendAudioBtn.addEventListener("click", sendAudio);
+
+    input.addEventListener("keydown", (e) => {
+      if (e.key === "Enter" && !e.shiftKey) {
+        e.preventDefault();
+        sendMessage();
+      }
+    });
+
+    scrollBottom();
+  </script>
+</body>
+</html>

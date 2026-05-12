@@ -1,0 +1,6 @@
+flask==3.*
+flask-cors==4.*
+google-genai>=1.51.0
+google-cloud-bigquery>=3.25.0
+gunicorn==23.*
+playwright==1.52.0
